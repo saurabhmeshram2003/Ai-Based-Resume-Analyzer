@@ -218,7 +218,12 @@ def analyze():
         "suggestions":           suggestions,
         "created_at":            datetime.utcnow(),
     }
-    analysis_id = AnalysisModel.save(get_db(), analysis_doc)
+    try:
+        analysis_id = AnalysisModel.save(get_db(), analysis_doc)
+    except Exception as e:
+        print(f"MongoDB save failed: {e}")
+        flash("An internal database error occurred while saving your results. Please check your database connection.", "error")
+        return redirect(url_for("analyzer"))
 
     return redirect(url_for("result", analysis_id=str(analysis_id)))
 
