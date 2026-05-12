@@ -308,15 +308,10 @@
           <i class="fa-solid fa-rotate text-violet-600 dark:text-violet-400 text-sm"></i>
         </div>
         <h2 class="font-heading font-bold text-gray-900 dark:text-white">Bullet Point Rewriter</h2>
-        {% if is_pro %}
-        <span class="ml-2 text-xs font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full">AI</span>
-        {% else %}
-        <span class="ml-2 text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">Rule-Based</span>
-        {% endif %}
+        <span class="ml-2 text-xs font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full">Free</span>
       </div>
       <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
         Paste any weak bullet point from your resume and get an improved version with stronger verbs and quantified impact.
-        {% if not is_pro %}<a href="/profile" class="text-indigo-600 dark:text-indigo-400 font-medium hover:underline">Upgrade to Pro</a> for GPT-4 rewrites.{% endif %}
       </p>
 
       <div class="space-y-4">
@@ -359,15 +354,6 @@
       <a href="/report/{{ analysis._id }}" class="btn-sm-primary">
         <i class="fa-solid fa-download"></i> Download PDF Report
       </a>
-      {% if current_user.is_authenticated %}
-      <a href="/history" class="btn-sm-outline">
-        <i class="fa-solid fa-clock-rotate-left"></i> My History
-      </a>
-      {% else %}
-      <a href="/signup" class="btn-sm-outline text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800">
-        <i class="fa-solid fa-user-plus"></i> Save to Account
-      </a>
-      {% endif %}
     </div>
 
   </div>

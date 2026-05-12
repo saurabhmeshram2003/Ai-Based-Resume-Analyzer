@@ -72,12 +72,6 @@
         <div class="hidden md:flex items-center gap-1">
           <a href="/"        class="nav-link {% if request.endpoint == 'index'    %}nav-link-active{% endif %}">Home</a>
           <a href="/analyzer" class="nav-link {% if request.endpoint == 'analyzer'  %}nav-link-active{% endif %}">Analyzer</a>
-          {% if current_user.is_authenticated %}
-          <a href="/history" class="nav-link {% if request.endpoint == 'history'   %}nav-link-active{% endif %}">History</a>
-          {% if current_user.is_admin %}
-          <a href="/admin"   class="nav-link {% if request.endpoint == 'admin'     %}nav-link-active{% endif %}">Admin</a>
-          {% endif %}
-          {% endif %}
         </div>
 
         <!-- Right side -->
@@ -88,28 +82,6 @@
             <i class="fa-solid fa-moon dark:hidden text-sm"></i>
             <i class="fa-solid fa-sun hidden dark:block text-sm"></i>
           </button>
-
-          {% if current_user.is_authenticated %}
-          <!-- Avatar + name -->
-          <a href="/profile" class="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {{ current_user.name[0].upper() }}
-            </div>
-            <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300">{{ current_user.name.split()[0] }}</span>
-            {% if current_user.subscription != 'free' %}
-            <span class="hidden sm:block text-xs font-semibold px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">{{ current_user.subscription.title() }}</span>
-            {% endif %}
-          </a>
-          <a href="/logout" class="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-red-300 hover:text-red-600 dark:hover:border-red-700 dark:hover:text-red-400 transition-all">
-            <i class="fa-solid fa-arrow-right-from-bracket text-xs mr-1"></i>Out
-          </a>
-
-          {% else %}
-          <a href="/login"  class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-3 py-1.5">Log in</a>
-          <a href="/signup" class="text-sm font-semibold px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all btn-scale">
-            Get Started
-          </a>
-          {% endif %}
         </div>
       </div>
     </div>
