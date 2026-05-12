@@ -172,6 +172,8 @@ def analyze():
     job_role = request.form.get("job_role", "General / Other")
 
     # ---- Save temp file, extract text, clean up ---------------------------
+    # Ensure upload dir exists (must be at request time for /tmp)
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     try:
         file.save(file_path)
         resume_text = extract_text(file_path)
@@ -216,9 +218,6 @@ def analyze():
         "suggestions":           suggestions,
         "created_at":            datetime.utcnow(),
     }
-    # ---- Ensure upload dir exists (must be at request time for /tmp) ------
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
     analysis_id = AnalysisModel.save(get_db(), analysis_doc)
 
     return redirect(url_for("result", analysis_id=str(analysis_id)))
