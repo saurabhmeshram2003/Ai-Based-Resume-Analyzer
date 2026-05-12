@@ -3,7 +3,6 @@ flask-limiter
 pymongo
 pdfplumber
 docx2txt
-spacy>=3.5,<4
 reportlab
 python-dotenv
 openai

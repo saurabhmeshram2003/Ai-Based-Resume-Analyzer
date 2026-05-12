@@ -26,11 +26,19 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-CHANGE-IN-PRODUCTION")
 
 # ---------------------------------------------------------------------------
-# MongoDB
+# MongoDB — lazy init so a missing MONGO_URI doesn't crash on import
 # ---------------------------------------------------------------------------
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-db = client["resume_analyzer"]
+MONGO_URI = os.getenv("MONGO_URI", "")
+_client = None
+_db = None
+
+def get_db():
+    global _client, _db
+    if _db is None:
+        uri = MONGO_URI or "mongodb://localhost:27017"
+        _client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        _db = _client["resume_analyzer"]
+    return _db
 
 # ---------------------------------------------------------------------------
 # Rate limiting
@@ -54,10 +62,10 @@ from utils.pdf_report    import generate_pdf_report
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-UPLOAD_FOLDER      = os.path.join(os.path.dirname(__file__), "uploads")
+# On Vercel the project directory is read-only; /tmp is always writable
+UPLOAD_FOLDER      = "/tmp/uploads"
 ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 MAX_FILE_SIZE      = 2 * 1024 * 1024          # 2 MB
-ALLOWED_MIMETYPES  = {"application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
 
 JOB_ROLES = [
     "Software Engineer", "Senior Software Engineer", "Full Stack Developer",
@@ -85,7 +93,7 @@ Nice to have:
 - Agile/Scrum experience
 """
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 
 # ---------------------------------------------------------------------------
@@ -208,7 +216,10 @@ def analyze():
         "suggestions":           suggestions,
         "created_at":            datetime.utcnow(),
     }
-    analysis_id = AnalysisModel.save(db, analysis_doc)
+    # ---- Ensure upload dir exists (must be at request time for /tmp) ------
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+    analysis_id = AnalysisModel.save(get_db(), analysis_doc)
 
     return redirect(url_for("result", analysis_id=str(analysis_id)))
 
@@ -218,7 +229,7 @@ def analyze():
 # ---------------------------------------------------------------------------
 @app.get("/result/<analysis_id>")
 def result(analysis_id: str):
-    analysis = AnalysisModel.find_by_id(db, analysis_id)
+    analysis = AnalysisModel.find_by_id(get_db(), analysis_id)
     if not analysis:
         flash("Analysis not found.", "error")
         return redirect(url_for("analyzer"))
@@ -237,7 +248,7 @@ def result(analysis_id: str):
 
 @app.get("/report/<analysis_id>")
 def download_report(analysis_id: str):
-    analysis = AnalysisModel.find_by_id(db, analysis_id)
+    analysis = AnalysisModel.find_by_id(get_db(), analysis_id)
     if not analysis:
         flash("Analysis not found.", "error")
         return redirect(url_for("analyzer"))
