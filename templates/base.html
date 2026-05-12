@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ResumeAI — ATS Resume Analyzer{% endblock %}</title>
+  <meta name="description" content="{% block meta_desc %}AI-powered ATS resume analyzer. Upload your resume, compare with any job description, and get actionable feedback to land more interviews.{% endblock %}">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            indigo: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' },
+            violet: { 500:'#8b5cf6',600:'#7c3aed' },
+          },
+          fontFamily: {
+            sans:    ['Inter', 'sans-serif'],
+            heading: ['Poppins', 'sans-serif'],
+          },
+          animation: {
+            'fade-up':   'fadeUp 0.5s ease both',
+            'fade-in':   'fadeIn 0.4s ease both',
+            'pulse-slow':'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
+          },
+          keyframes: {
+            fadeUp:  { '0%':{ opacity:'0', transform:'translateY(16px)' }, '100%':{ opacity:'1', transform:'translateY(0)' } },
+            fadeIn:  { '0%':{ opacity:'0' }, '100%':{ opacity:'1' } },
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-slate-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans min-h-screen flex flex-col transition-colors duration-300">
+
+  <!-- ============================================================ Navbar -->
+  <nav class="fixed top-0 inset-x-0 z-50 glass-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-2.5 group">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-200">
+            <i class="fa-solid fa-wand-magic-sparkles text-white text-sm"></i>
+          </div>
+          <span class="font-heading font-bold text-lg text-gray-900 dark:text-white tracking-tight">
+            Resume<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+          </span>
+        </a>
+
+        <!-- Desktop nav links -->
+        <div class="hidden md:flex items-center gap-1">
+          <a href="/"        class="nav-link {% if request.endpoint == 'index'    %}nav-link-active{% endif %}">Home</a>
+          <a href="/analyzer" class="nav-link {% if request.endpoint == 'analyzer'  %}nav-link-active{% endif %}">Analyzer</a>
+          {% if current_user.is_authenticated %}
+          <a href="/history" class="nav-link {% if request.endpoint == 'history'   %}nav-link-active{% endif %}">History</a>
+          {% if current_user.is_admin %}
+          <a href="/admin"   class="nav-link {% if request.endpoint == 'admin'     %}nav-link-active{% endif %}">Admin</a>
+          {% endif %}
+          {% endif %}
+        </div>
+
+        <!-- Right side -->
+        <div class="flex items-center gap-2">
+          <!-- Dark mode toggle -->
+          <button id="dark-toggle" aria-label="Toggle dark mode"
+            class="p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+            <i class="fa-solid fa-moon dark:hidden text-sm"></i>
+            <i class="fa-solid fa-sun hidden dark:block text-sm"></i>
+          </button>
+
+          {% if current_user.is_authenticated %}
+          <!-- Avatar + name -->
+          <a href="/profile" class="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {{ current_user.name[0].upper() }}
+            </div>
+            <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300">{{ current_user.name.split()[0] }}</span>
+            {% if current_user.subscription != 'free' %}
+            <span class="hidden sm:block text-xs font-semibold px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">{{ current_user.subscription.title() }}</span>
+            {% endif %}
+          </a>
+          <a href="/logout" class="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-red-300 hover:text-red-600 dark:hover:border-red-700 dark:hover:text-red-400 transition-all">
+            <i class="fa-solid fa-arrow-right-from-bracket text-xs mr-1"></i>Out
+          </a>
+
+          {% else %}
+          <a href="/login"  class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-3 py-1.5">Log in</a>
+          <a href="/signup" class="text-sm font-semibold px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all btn-scale">
+            Get Started
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================ Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="fixed top-20 right-4 z-50 space-y-2 w-80 max-w-[calc(100vw-2rem)]" id="flash-container">
+    {% for category, message in messages %}
+    <div class="flash-toast glass-card flex items-start gap-3 p-4 rounded-xl border shadow-lg
+      {% if   category == 'error'   %}border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800/60
+      {% elif category == 'success' %}border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800/60
+      {% elif category == 'warning' %}border-amber-200  bg-amber-50  dark:bg-amber-900/20  dark:border-amber-800/60
+      {% else                       %}border-indigo-200 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-800/60
+      {% endif %}">
+      <i class="fa-solid mt-0.5 flex-shrink-0
+        {% if   category == 'error'   %}fa-circle-exclamation text-red-500
+        {% elif category == 'success' %}fa-circle-check text-emerald-500
+        {% elif category == 'warning' %}fa-triangle-exclamation text-amber-500
+        {% else                       %}fa-circle-info text-indigo-500
+        {% endif %}"></i>
+      <p class="text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug">{{ message }}</p>
+      <button onclick="this.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600 flex-shrink-0">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- ============================================================ Main content -->
+  <main class="flex-grow pt-16">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ============================================================ Footer -->
+  {% block footer %}
+  <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+            <i class="fa-solid fa-wand-magic-sparkles text-white text-xs"></i>
+          </div>
+          <span class="font-heading font-bold text-gray-900 dark:text-white text-sm">Resume<span class="text-indigo-600">AI</span></span>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400">&copy; 2026 ResumeAI. All rights reserved.</p>
+        <div class="flex gap-5 text-sm text-gray-500 dark:text-gray-400">
+          <a href="#" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Privacy</a>
+          <a href="#" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms</a>
+          <a href="#" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <!-- Custom JS -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

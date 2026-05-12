@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}ResumeAI — ATS Resume Analyzer: Get More Interviews{% endblock %}
+{% block meta_desc %}Free AI-powered ATS resume analyzer. Upload your resume & paste a job description to get your ATS compatibility score, skill gap analysis, and actionable suggestions.{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================ HERO -->
+<section class="relative overflow-hidden">
+  <!-- Animated gradient background -->
+  <div class="hero-bg absolute inset-0 -z-10"></div>
+  <div class="blob blob-1 absolute -z-10"></div>
+  <div class="blob blob-2 absolute -z-10"></div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center">
+    <!-- Badge -->
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-sm font-medium mb-8 animate-fade-in">
+      <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse-slow"></span>
+      AI-Powered · Real ATS Logic · Instant Results
+    </div>
+
+    <!-- Headline -->
+    <h1 class="font-heading text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6 animate-fade-up">
+      Get <span class="gradient-text">Interview Calls</span><br>Faster with AI
+    </h1>
+
+    <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 animate-fade-up" style="animation-delay:.1s">
+      Upload your resume, paste any job description, and our AI scores your ATS compatibility, surfaces missing skills, and gives you a roadmap to a stronger application.
+    </p>
+
+    <!-- CTAs -->
+    <div class="flex flex-col sm:flex-row justify-center gap-4 mb-16 animate-fade-up" style="animation-delay:.2s">
+      <a href="/analyzer" id="hero-cta-primary"
+        class="btn-scale inline-flex items-center justify-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-base font-semibold rounded-2xl shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze My Resume — Free
+      </a>
+      <a href="#how-it-works" id="hero-cta-secondary"
+        class="btn-scale inline-flex items-center justify-center gap-2 px-8 py-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-base font-semibold rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all">
+        <i class="fa-solid fa-play-circle text-indigo-500"></i> See How It Works
+      </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto animate-fade-up" style="animation-delay:.3s">
+      <div class="stat-pill">
+        <span class="stat-number">200+</span>
+        <span class="stat-label">Skills Tracked</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-number">5-Dim</span>
+        <span class="stat-label">ATS Score Analysis</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-number">100%</span>
+        <span class="stat-label">Free to Start</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ HOW IT WORKS -->
+<section id="how-it-works" class="py-24 bg-white dark:bg-gray-900">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="section-eyebrow">Simple Process</p>
+      <h2 class="section-title">Three Steps to a Better Resume</h2>
+      <p class="section-sub">No signup required to get started. Upload, analyze, improve.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8 relative">
+      <!-- Connecting line (desktop) -->
+      <div class="hidden md:block absolute top-12 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-indigo-200 via-violet-300 to-indigo-200 dark:from-indigo-900 dark:via-violet-800 dark:to-indigo-900 -z-0"></div>
+
+      {% for step in [
+        ('1', 'fa-cloud-arrow-up', 'indigo', 'Upload Your Resume', 'Drag & drop or browse your PDF or DOCX resume. We support files up to 2 MB.'),
+        ('2', 'fa-clipboard-list', 'violet', 'Paste Job Description', 'Copy-paste any job posting. Our AI extracts required skills, keywords, and role requirements.'),
+        ('3', 'fa-chart-pie',     'emerald', 'Get ATS Insights', 'Receive a detailed score, matched/missing skills, section feedback, and personalized suggestions.')
+      ] %}
+      <div class="how-step-card group">
+        <div class="step-badge bg-{{ loop.index == 1 and 'indigo' or (loop.index == 2 and 'violet' or 'emerald') }}-100 dark:bg-{{ loop.index == 1 and 'indigo' or (loop.index == 2 and 'violet' or 'emerald') }}-900/30 text-{{ loop.index == 1 and 'indigo' or (loop.index == 2 and 'violet' or 'emerald') }}-600 dark:text-{{ loop.index == 1 and 'indigo' or (loop.index == 2 and 'violet' or 'emerald') }}-400">
+          <i class="fa-solid {{ step[1] }} text-2xl"></i>
+        </div>
+        <div class="step-num">Step {{ step[0] }}</div>
+        <h3 class="text-lg font-heading font-bold text-gray-900 dark:text-white mb-2">{{ step[3] }}</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ step[4] }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ FEATURES -->
+<section class="py-24 bg-slate-50 dark:bg-gray-950">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="section-eyebrow">Features</p>
+      <h2 class="section-title">Everything You Need to Beat the ATS</h2>
+      <p class="section-sub">A comprehensive suite of tools to optimize your resume for any role.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for feat in [
+        ('fa-bullseye',       'indigo',   'ATS Score Calculator',        'Get a composite 0–100 ATS compatibility score weighted across skill match, keyword density, experience, and structure.'),
+        ('fa-puzzle-piece',   'violet',   'Skill Gap Analysis',          'Instantly see matched and missing skills colour-coded by priority. Know exactly what to add to your resume.'),
+        ('fa-layer-group',    'emerald',  'Section Inspector',           'We check for Contact, Summary, Experience, Education, Skills, and Projects sections — with per-section tips.'),
+        ('fa-lightbulb',      'amber',    'AI Suggestions Engine',       'Actionable, priority-ranked recommendations including metrics prompts, action verbs, and keyword boosters.'),
+        ('fa-rotate',         'rose',     'Bullet Point Rewriter',       'Paste any resume bullet and get an impact-maximized rewrite with strong verbs and quantified results.'),
+        ('fa-file-pdf',       'cyan',     'PDF Report Download',         'Generate a beautifully formatted PDF report to share with mentors or keep for your records.')
+      ] %}
+      <div class="feature-card group">
+        <div class="feature-icon bg-{{ feat[1] }}-50 dark:bg-{{ feat[1] }}-900/20 text-{{ feat[1] }}-600 dark:text-{{ feat[1] }}-400 group-hover:scale-110 transition-transform duration-300">
+          <i class="fa-solid {{ feat[0] }} text-xl"></i>
+        </div>
+        <h3 class="text-base font-heading font-bold text-gray-900 dark:text-white mb-1">{{ feat[2] }}</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ feat[3] }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ TESTIMONIALS -->
+<section class="py-24 bg-white dark:bg-gray-900">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="section-eyebrow">Social Proof</p>
+      <h2 class="section-title">Trusted by Job Seekers</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6">
+      {% for t in [
+        ('Priya S.', 'Software Engineer @ Google', 'I used ResumeAI to tailor my resume for 3 different roles. The missing skills panel was an eye-opener — I added MongoDB and Docker and heard back within days.', '5'),
+        ('Arjun M.', 'Data Scientist @ Stripe',    'The keyword density score showed me I was under-optimizing my resume. After following the suggestions, my response rate jumped significantly.', '5'),
+        ('Sara K.',  'Product Manager @ Notion',   'The section inspector caught that I had no Projects section. Added three case studies and immediately started getting recruiter DMs on LinkedIn.', '5')
+      ] %}
+      <div class="testimonial-card">
+        <div class="flex gap-1 mb-3">
+          {% for _ in range(5) %}<i class="fa-solid fa-star text-amber-400 text-sm"></i>{% endfor %}
+        </div>
+        <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4 italic">"{{ t[2] }}"</p>
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-sm font-bold">{{ t[0][0] }}</div>
+          <div>
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ t[0] }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ t[1] }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ PRICING -->
+<section id="pricing" class="py-24 bg-slate-50 dark:bg-gray-950">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="section-eyebrow">Pricing</p>
+      <h2 class="section-title">Start Free, Upgrade Anytime</h2>
+      <p class="section-sub">No credit card required to get started.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <!-- Free -->
+      <div class="pricing-card">
+        <div class="pricing-plan-name">Free</div>
+        <div class="pricing-price">$0<span class="pricing-period">/month</span></div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Perfect to get started</p>
+        <ul class="space-y-3 mb-8">
+          {% for f in ['3 analyses per day','Skill match report','Section analysis','Basic suggestions','Score breakdown'] %}
+          <li class="pricing-feature"><i class="fa-solid fa-check text-emerald-500 text-xs mr-2"></i>{{ f }}</li>
+          {% endfor %}
+          {% for f in ['PDF reports','AI rewrite assistant','Unlimited history'] %}
+          <li class="pricing-feature text-gray-400"><i class="fa-solid fa-xmark text-gray-300 dark:text-gray-600 text-xs mr-2"></i>{{ f }}</li>
+          {% endfor %}
+        </ul>
+        <a href="/signup" id="pricing-free-cta" class="btn-outline-full">Get Started Free</a>
+      </div>
+
+      <!-- Pro (highlighted) -->
+      <div class="pricing-card pricing-card-featured relative">
+        <div class="absolute -top-3 inset-x-0 flex justify-center">
+          <span class="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow">MOST POPULAR</span>
+        </div>
+        <div class="pricing-plan-name text-indigo-600 dark:text-indigo-400">Pro</div>
+        <div class="pricing-price">$9<span class="pricing-period">/month</span></div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">For active job seekers</p>
+        <ul class="space-y-3 mb-8">
+          {% for f in ['Unlimited analyses','Everything in Free','PDF report downloads','AI bullet point rewriter','Full history dashboard','Priority support'] %}
+          <li class="pricing-feature"><i class="fa-solid fa-check text-emerald-500 text-xs mr-2"></i>{{ f }}</li>
+          {% endfor %}
+        </ul>
+        <a href="/signup" id="pricing-pro-cta" class="btn-primary-full">Start Pro Trial</a>
+      </div>
+
+      <!-- Recruiter -->
+      <div class="pricing-card">
+        <div class="pricing-plan-name">Recruiter</div>
+        <div class="pricing-price">$29<span class="pricing-period">/month</span></div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">For hiring teams</p>
+        <ul class="space-y-3 mb-8">
+          {% for f in ['Everything in Pro','Bulk resume upload','CSV score export','Candidate comparison','Team dashboard','SLA support'] %}
+          <li class="pricing-feature"><i class="fa-solid fa-check text-emerald-500 text-xs mr-2"></i>{{ f }}</li>
+          {% endfor %}
+        </ul>
+        <a href="/signup" id="pricing-recruiter-cta" class="btn-outline-full">Contact Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ FOOTER CTA -->
+<section class="py-20 bg-gradient-to-br from-indigo-600 to-violet-700">
+  <div class="max-w-3xl mx-auto text-center px-4">
+    <h2 class="font-heading text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Land More Interviews?</h2>
+    <p class="text-indigo-200 text-lg mb-8">Start for free. No credit card. Results in seconds.</p>
+    <a href="/analyzer" id="footer-cta" class="inline-flex items-center gap-2 px-10 py-4 bg-white text-indigo-700 font-bold text-base rounded-2xl hover:bg-indigo-50 shadow-xl btn-scale transition-all">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze My Resume Now
+    </a>
+  </div>
+</section>
+
+{% endblock %}

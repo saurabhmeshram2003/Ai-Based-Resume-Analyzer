@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}My Profile — ResumeAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-indigo-500/30">
+        {{ current_user.name[0].upper() }}
+      </div>
+      <div>
+        <h1 class="font-heading text-2xl font-bold text-gray-900 dark:text-white">{{ current_user.name }}</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ current_user.email }}</p>
+      </div>
+      <div class="ml-auto">
+        <span class="px-3 py-1.5 rounded-full text-sm font-bold
+          {% if current_user.subscription == 'pro' %}bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400
+          {% elif current_user.subscription == 'recruiter' %}bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400
+          {% else %}bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+          <i class="fa-solid {% if current_user.subscription != 'free' %}fa-crown{% else %}fa-user{% endif %} mr-1"></i>
+          {{ current_user.subscription | title }}
+        </span>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+
+      <!-- Edit profile form -->
+      <div class="md:col-span-2 glass-card rounded-2xl p-6">
+        <h2 class="font-heading font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+          <i class="fa-solid fa-pen text-indigo-500 text-sm"></i> Edit Profile
+        </h2>
+        <form action="/profile" method="POST" class="space-y-5">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Display Name</label>
+            <input type="text" name="name" value="{{ user.name }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Years of Experience</label>
+              <input type="number" name="yoe" min="0" max="40" value="{{ user.profile.get('yoe', 0) }}"
+                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Industry</label>
+              <select name="industry"
+                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                {% for ind in ['Technology', 'Finance', 'Healthcare', 'Education', 'Marketing', 'Design', 'Sales', 'Operations', 'Other'] %}
+                <option {% if user.profile.get('industry') == ind %}selected{% endif %}>{{ ind }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Target Roles</label>
+            <div class="grid grid-cols-2 gap-2">
+              {% for role in job_roles[:12] %}
+              <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                <input type="checkbox" name="target_roles" value="{{ role }}"
+                  {% if role in user.profile.get('target_roles', []) %}checked{% endif %}
+                  class="accent-indigo-600 w-4 h-4">
+                {{ role }}
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <button type="submit"
+            class="btn-scale px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-all">
+            <i class="fa-solid fa-floppy-disk mr-1"></i> Save Changes
+          </button>
+        </form>
+      </div>
+
+      <!-- Right sidebar: plan + stats -->
+      <div class="space-y-5">
+
+        <!-- Plan card -->
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="font-heading font-semibold text-gray-900 dark:text-white mb-4 text-sm">Current Plan</h3>
+          <div class="text-center mb-4">
+            <span class="text-3xl font-extrabold
+              {% if current_user.subscription == 'pro' %}text-indigo-600 dark:text-indigo-400
+              {% elif current_user.subscription == 'recruiter' %}text-violet-600 dark:text-violet-400
+              {% else %}text-gray-800 dark:text-gray-200{% endif %}">
+              {{ current_user.subscription | title }}
+            </span>
+            {% if current_user.subscription == 'free' %}
+            <p class="text-xs text-gray-400 mt-1">{{ daily_used }}/3 analyses today</p>
+            <div class="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full mt-2">
+              <div class="h-full bg-indigo-400 rounded-full transition-all" style="width:{{ (daily_used/3*100)|int }}%"></div>
+            </div>
+            {% else %}
+            <p class="text-xs text-emerald-500 mt-1">Unlimited analyses</p>
+            {% endif %}
+          </div>
+
+          <!-- Mock upgrade -->
+          {% if current_user.subscription == 'free' %}
+          <form action="/upgrade" method="POST">
+            <input type="hidden" name="plan" value="pro">
+            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-all btn-scale">
+              <i class="fa-solid fa-crown mr-1"></i> Upgrade to Pro (Demo)
+            </button>
+          </form>
+          {% elif current_user.subscription == 'pro' %}
+          <form action="/upgrade" method="POST">
+            <input type="hidden" name="plan" value="recruiter">
+            <button type="submit" class="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-xl transition-all btn-scale">
+              <i class="fa-solid fa-building mr-1"></i> Upgrade to Recruiter
+            </button>
+          </form>
+          <form action="/upgrade" method="POST" class="mt-2">
+            <input type="hidden" name="plan" value="free">
+            <button type="submit" class="w-full py-2 border border-gray-200 dark:border-gray-700 text-gray-500 text-xs rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+              Downgrade to Free
+            </button>
+          </form>
+          {% else %}
+          <form action="/upgrade" method="POST">
+            <input type="hidden" name="plan" value="free">
+            <button type="submit" class="w-full py-2 border border-gray-200 dark:border-gray-700 text-gray-500 text-xs rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+              Downgrade to Free
+            </button>
+          </form>
+          {% endif %}
+        </div>
+
+        <!-- Plan features -->
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="font-heading font-semibold text-gray-900 dark:text-white mb-3 text-sm">Plan Features</h3>
+          <ul class="space-y-2 text-sm">
+            {% for feat, avail in [
+              ('Analyses/day', plan_info.daily_analyses if plan_info.daily_analyses != -1 else '∞'),
+              ('PDF Reports',  plan_info.pdf_reports),
+              ('AI Rewriter',  plan_info.ai_rewrite),
+              ('Bulk Upload',  plan_info.get('bulk_upload', False)),
+              ('CSV Export',   plan_info.get('csv_export', False)),
+            ] %}
+            <li class="flex items-center justify-between">
+              <span class="text-gray-600 dark:text-gray-400">{{ feat }}</span>
+              {% if avail is sameas true %}
+              <i class="fa-solid fa-check text-emerald-500 text-xs"></i>
+              {% elif avail is sameas false %}
+              <i class="fa-solid fa-xmark text-gray-300 dark:text-gray-600 text-xs"></i>
+              {% else %}
+              <span class="font-semibold text-gray-800 dark:text-gray-200 text-xs">{{ avail }}</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent analyses -->
+    {% if recent_analyses %}
+    <div class="glass-card rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-indigo-500 text-sm"></i> Recent Analyses
+        </h2>
+        <a href="/history" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View all →</a>
+      </div>
+      <div class="space-y-3">
+        {% for a in recent_analyses %}
+        <a href="/result/{{ a._id }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+          <div class="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+            <i class="fa-solid fa-file-lines text-indigo-500 text-sm"></i>
+          </div>
+          <div class="flex-grow min-w-0">
+            <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ a.filename }}</p>
+            <p class="text-xs text-gray-400">{{ a.get('job_role', 'General') }}</p>
+          </div>
+          <span class="flex-shrink-0 font-bold text-sm
+            {% if a.score >= 75 %}text-emerald-600 dark:text-emerald-400
+            {% elif a.score >= 50 %}text-amber-600 dark:text-amber-400
+            {% else %}text-red-600 dark:text-red-400{% endif %}">
+            {{ a.score|int }}%
+          </span>
+          <i class="fa-solid fa-chevron-right text-gray-300 dark:text-gray-600 text-xs group-hover:text-indigo-500 transition-colors"></i>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

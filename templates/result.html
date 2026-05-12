@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+{% block title %}ATS Score {{ analysis.score }}% — {{ analysis.filename }} — ResumeAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- ============================================================ TOP BAR -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
+          <a href="/analyzer" class="hover:text-indigo-600 transition-colors">Analyzer</a>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+          <span>Results</span>
+        </div>
+        <h1 class="font-heading text-2xl font-bold text-gray-900 dark:text-white">
+          {{ analysis.filename }}
+        </h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          Role: <span class="font-medium text-gray-700 dark:text-gray-300">{{ analysis.get('job_role', 'General') }}</span>
+          &nbsp;·&nbsp;
+          {% if analysis.get('created_at') %}
+            {{ analysis.created_at.strftime('%b %d, %Y') if analysis.created_at is not string else analysis.created_at[:10] }}
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex flex-wrap gap-3">
+        <a href="/analyzer" id="analyze-another-btn"
+          class="btn-sm-outline">
+          <i class="fa-solid fa-plus"></i> New Analysis
+        </a>
+        <a href="/report/{{ analysis._id }}" id="download-pdf-btn"
+          class="btn-sm-primary">
+          <i class="fa-solid fa-file-pdf"></i> Download PDF
+        </a>
+      </div>
+    </div>
+
+    <!-- ============================================================ HERO SCORE ROW -->
+    <div class="grid md:grid-cols-3 gap-6">
+
+      <!-- Circular gauge -->
+      <div class="glass-card rounded-2xl p-8 flex flex-col items-center justify-center">
+        <div class="relative">
+          <svg class="score-svg" width="160" height="160" viewBox="0 0 160 160">
+            <!-- Background track -->
+            <circle cx="80" cy="80" r="64" fill="none" stroke="#e2e8f0" stroke-width="14" class="dark:stroke-gray-700"/>
+            <!-- Score arc -->
+            <circle id="score-arc" cx="80" cy="80" r="64" fill="none"
+              stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="402.1"
+              stroke-dashoffset="402.1"
+              transform="rotate(-90 80 80)"
+              class="score-arc-bar transition-all duration-1500 ease-out"
+              data-score="{{ analysis.score }}"
+              data-color="{{ analysis.score_color }}"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span id="score-display" class="font-heading text-4xl font-extrabold text-gray-900 dark:text-white" data-target="{{ analysis.score }}">0</span>
+            <span class="text-xs font-medium text-gray-400 mt-0.5">ATS Score</span>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <span class="px-4 py-1.5 rounded-full text-sm font-bold
+            {% if analysis.score_color == 'green' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400
+            {% elif analysis.score_color == 'yellow' %}bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400
+            {% elif analysis.score_color == 'orange' %}bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400
+            {% else %}bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400
+            {% endif %}">
+            {{ analysis.score_label }}
+          </span>
+          <p class="text-xs text-gray-400 mt-2">
+            {% if analysis.score >= 75 %}Strong ATS match — keep going!
+            {% elif analysis.score >= 55 %}On track — apply the suggestions below
+            {% elif analysis.score >= 35 %}Needs improvement — add missing skills
+            {% else %}Major gaps — review the recommendations
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <!-- Score breakdown cards (5 metrics) -->
+      <div class="md:col-span-2 grid sm:grid-cols-2 gap-4">
+        {% set breakdowns = [
+          ('Skill Match',      analysis.skill_match_score,       'fa-puzzle-piece',   'indigo',   '40% weight'),
+          ('Keyword Density',  analysis.keyword_density_score,   'fa-magnifying-glass','violet',  '20% weight'),
+          ('Experience',       analysis.experience_score,        'fa-briefcase',       'amber',   '20% weight'),
+          ('Structure',        analysis.structure_score,         'fa-layer-group',     'emerald', '20% weight'),
+        ] %}
+        {% for label, score, icon, color, weight in breakdowns %}
+        <div class="glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-{{ color }}-50 dark:bg-{{ color }}-900/20 flex items-center justify-center">
+                <i class="fa-solid {{ icon }} text-{{ color }}-600 dark:text-{{ color }}-400 text-xs"></i>
+              </div>
+              <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ label }}</span>
+            </div>
+            <span class="text-base font-extrabold
+              {% if score >= 70 %}text-emerald-600 dark:text-emerald-400
+              {% elif score >= 45 %}text-amber-600 dark:text-amber-400
+              {% else %}text-red-600 dark:text-red-400{% endif %}">
+              {{ score|int }}%
+            </span>
+          </div>
+          <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div class="score-bar h-full rounded-full transition-all duration-700
+              {% if score >= 70 %}bg-emerald-500
+              {% elif score >= 45 %}bg-amber-500
+              {% else %}bg-red-500{% endif %}"
+              style="width:0%" data-target="{{ score }}"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-1.5">{{ weight }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ============================================================ SKILLS -->
+    <div class="grid lg:grid-cols-2 gap-6">
+
+      <!-- Matched Skills -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+            <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+          </div>
+          <h2 class="font-heading font-bold text-gray-900 dark:text-white">Matched Skills</h2>
+          <span class="ml-auto text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-full">
+            {{ analysis.matched_skills | length }}
+          </span>
+        </div>
+
+        {% if analysis.matched_by_category %}
+          {% for category, skills in analysis.matched_by_category.items() %}
+          {% if skills %}
+          <div class="mb-4 last:mb-0">
+            <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">{{ category | replace('_', ' ') | title }}</p>
+            <div class="flex flex-wrap gap-2">
+              {% for skill in skills %}
+              <span class="skill-pill-green">
+                <i class="fa-solid fa-check text-emerald-500 text-[10px] mr-1"></i>{{ skill | title }}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        {% elif analysis.matched_skills %}
+          <div class="flex flex-wrap gap-2">
+            {% for skill in analysis.matched_skills %}
+            <span class="skill-pill-green">{{ skill }}</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-sm text-gray-400 dark:text-gray-500 italic">No matching skills found. Tailor your resume to the JD.</p>
+        {% endif %}
+      </div>
+
+      <!-- Missing Skills -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+            <i class="fa-solid fa-circle-xmark text-red-500 text-sm"></i>
+          </div>
+          <h2 class="font-heading font-bold text-gray-900 dark:text-white">Missing Skills</h2>
+          <span class="ml-auto text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2.5 py-1 rounded-full">
+            {{ analysis.missing_skills | length }}
+          </span>
+        </div>
+
+        {% if analysis.missing_skills_with_priority %}
+          <div class="flex flex-wrap gap-2">
+            {% for item in analysis.missing_skills_with_priority %}
+            <span class="skill-pill-red relative group cursor-default">
+              {% if item.priority == 'high' %}
+              <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5 inline-block animate-pulse-slow"></span>
+              {% elif item.priority == 'medium' %}
+              <span class="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5 inline-block"></span>
+              {% else %}
+              <span class="w-1.5 h-1.5 bg-blue-400 rounded-full mr-1.5 inline-block"></span>
+              {% endif %}
+              {{ item.skill | title }}
+              <span class="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                {{ item.priority | title }} priority
+              </span>
+            </span>
+            {% endfor %}
+          </div>
+          <p class="text-xs text-gray-400 mt-3">
+            <span class="inline-flex items-center gap-1 mr-3"><span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>High</span>
+            <span class="inline-flex items-center gap-1 mr-3"><span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>Medium</span>
+            <span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>Low</span>
+          </p>
+        {% elif analysis.missing_skills %}
+          <div class="flex flex-wrap gap-2">
+            {% for skill in analysis.missing_skills %}
+            <span class="skill-pill-red">{{ skill }}</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+            <i class="fa-solid fa-trophy text-emerald-500 text-lg"></i>
+            <p class="text-sm text-emerald-700 dark:text-emerald-400 font-medium">Excellent! Your resume covers all detected JD skills.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ============================================================ SECTION ANALYSIS -->
+    <div class="glass-card rounded-2xl p-6">
+      <div class="flex items-center gap-2 mb-5">
+        <div class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+          <i class="fa-solid fa-list-check text-indigo-600 dark:text-indigo-400 text-sm"></i>
+        </div>
+        <h2 class="font-heading font-bold text-gray-900 dark:text-white">Resume Section Analysis</h2>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-700">
+              <th class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Section</th>
+              <th class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Status</th>
+              <th class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3">Optimization Tip</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+            {% for section, present in analysis.section_feedback.items() %}
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <td class="py-3 pr-4 font-medium text-gray-800 dark:text-gray-200">
+                <div class="flex items-center gap-2">
+                  {% if section == 'contact' %}<i class="fa-solid fa-address-card text-indigo-400 text-xs w-4"></i>
+                  {% elif section == 'summary' %}<i class="fa-solid fa-align-left text-violet-400 text-xs w-4"></i>
+                  {% elif section == 'experience' %}<i class="fa-solid fa-briefcase text-amber-400 text-xs w-4"></i>
+                  {% elif section == 'education' %}<i class="fa-solid fa-graduation-cap text-blue-400 text-xs w-4"></i>
+                  {% elif section == 'skills' %}<i class="fa-solid fa-code text-emerald-400 text-xs w-4"></i>
+                  {% else %}<i class="fa-solid fa-folder text-rose-400 text-xs w-4"></i>
+                  {% endif %}
+                  {{ section | title }}
+                </div>
+              </td>
+              <td class="py-3 pr-4">
+                {% if present %}
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full">
+                  <i class="fa-solid fa-check text-[10px]"></i> Present
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2.5 py-1 rounded-full">
+                  <i class="fa-solid fa-xmark text-[10px]"></i> Missing
+                </span>
+                {% endif %}
+              </td>
+              <td class="py-3 text-gray-500 dark:text-gray-400 text-xs leading-relaxed max-w-xs">
+                {{ analysis.section_tips.get(section, '—') if analysis.section_tips else '—' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================================ SUGGESTIONS -->
+    <div class="glass-card rounded-2xl p-6">
+      <div class="flex items-center gap-2 mb-5">
+        <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+          <i class="fa-solid fa-lightbulb text-amber-500 text-sm"></i>
+        </div>
+        <h2 class="font-heading font-bold text-gray-900 dark:text-white">Actionable Suggestions</h2>
+      </div>
+
+      {% if analysis.suggestions %}
+      <ul class="space-y-3">
+        {% for sug in analysis.suggestions %}
+        {% set s = sug if sug is mapping else {'text': sug, 'priority': 'medium', 'icon': 'fa-circle-info', 'color': 'indigo'} %}
+        <li class="flex items-start gap-4 p-4 rounded-xl
+          {% if s.get('color') == 'red' %}bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30
+          {% elif s.get('color') == 'yellow' %}bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30
+          {% else %}bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30
+          {% endif %}">
+          <i class="fa-solid {{ s.get('icon', 'fa-circle-info') }} mt-0.5 flex-shrink-0
+            {% if s.get('color') == 'red' %}text-red-500
+            {% elif s.get('color') == 'yellow' %}text-amber-500
+            {% else %}text-indigo-500{% endif %}"></i>
+          <div class="flex-grow">
+            <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ s.get('text', s) }}</p>
+          </div>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0
+            {% if s.get('priority') == 'high' %}bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400
+            {% elif s.get('priority') == 'medium' %}bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400
+            {% else %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+            {% endif %}">{{ s.get('priority', 'low') | title }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-sm text-gray-400 italic">No suggestions — your resume looks great!</p>
+      {% endif %}
+    </div>
+
+    <!-- ============================================================ REWRITE ASSISTANT -->
+    <div class="glass-card rounded-2xl p-6">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
+          <i class="fa-solid fa-rotate text-violet-600 dark:text-violet-400 text-sm"></i>
+        </div>
+        <h2 class="font-heading font-bold text-gray-900 dark:text-white">Bullet Point Rewriter</h2>
+        {% if is_pro %}
+        <span class="ml-2 text-xs font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full">AI</span>
+        {% else %}
+        <span class="ml-2 text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">Rule-Based</span>
+        {% endif %}
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+        Paste any weak bullet point from your resume and get an improved version with stronger verbs and quantified impact.
+        {% if not is_pro %}<a href="/profile" class="text-indigo-600 dark:text-indigo-400 font-medium hover:underline">Upgrade to Pro</a> for GPT-4 rewrites.{% endif %}
+      </p>
+
+      <div class="space-y-4">
+        <textarea id="rewrite-input" rows="3"
+          class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm resize-none focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+          placeholder="E.g. 'Was responsible for managing the backend API'"></textarea>
+
+        <button id="rewrite-btn" type="button"
+          class="btn-scale inline-flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-violet-500/20 transition-all">
+          <i class="fa-solid fa-rotate"></i> Rewrite Bullet
+        </button>
+
+        <!-- Output -->
+        <div id="rewrite-result" class="hidden">
+          <div class="grid sm:grid-cols-2 gap-4 mt-2">
+            <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
+              <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-2">Before</p>
+              <p id="rewrite-before" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"></p>
+            </div>
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30">
+              <p class="text-xs font-bold text-emerald-600 uppercase tracking-wide mb-2">After <i class="fa-solid fa-sparkles text-amber-400 ml-1"></i></p>
+              <p id="rewrite-after" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"></p>
+            </div>
+          </div>
+          <button id="copy-rewrite-btn" class="mt-3 text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+            <i class="fa-solid fa-copy"></i> Copy improved version
+          </button>
+        </div>
+        <div id="rewrite-loader" class="hidden text-sm text-violet-600 dark:text-violet-400">
+          <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Rewriting…
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ BOTTOM ACTIONS -->
+    <div class="flex flex-wrap gap-3 justify-center pb-6">
+      <a href="/analyzer" class="btn-sm-outline">
+        <i class="fa-solid fa-plus"></i> Analyze Another
+      </a>
+      <a href="/report/{{ analysis._id }}" class="btn-sm-primary">
+        <i class="fa-solid fa-download"></i> Download PDF Report
+      </a>
+      {% if current_user.is_authenticated %}
+      <a href="/history" class="btn-sm-outline">
+        <i class="fa-solid fa-clock-rotate-left"></i> My History
+      </a>
+      {% else %}
+      <a href="/signup" class="btn-sm-outline text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800">
+        <i class="fa-solid fa-user-plus"></i> Save to Account
+      </a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Rewrite assistant
+  const rewriteBtn    = document.getElementById('rewrite-btn');
+  const rewriteInput  = document.getElementById('rewrite-input');
+  const rewriteResult = document.getElementById('rewrite-result');
+  const rewriteLoader = document.getElementById('rewrite-loader');
+  const rewriteBefore = document.getElementById('rewrite-before');
+  const rewriteAfter  = document.getElementById('rewrite-after');
+  const copyBtn       = document.getElementById('copy-rewrite-btn');
+
+  if (rewriteBtn) {
+    rewriteBtn.addEventListener('click', async () => {
+      const text = rewriteInput.value.trim();
+      if (!text) return;
+      rewriteResult.classList.add('hidden');
+      rewriteLoader.classList.remove('hidden');
+      rewriteBtn.disabled = true;
+
+      try {
+        const res  = await fetch('/rewrite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (data.improved) {
+          rewriteBefore.textContent = data.original;
+          rewriteAfter.textContent  = data.improved;
+          rewriteResult.classList.remove('hidden');
+        }
+      } catch (e) {
+        alert('Rewrite failed. Please try again.');
+      } finally {
+        rewriteLoader.classList.add('hidden');
+        rewriteBtn.disabled = false;
+      }
+    });
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(rewriteAfter.textContent).then(() => {
+        copyBtn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Copied!';
+        setTimeout(() => {
+          copyBtn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copy improved version';
+        }, 2000);
+      });
+    });
+  }
+
+  // Animate score gauge on load
+  window.addEventListener('DOMContentLoaded', () => {
+    const arc = document.getElementById('score-arc');
+    const scoreDisplay = document.getElementById('score-display');
+    if (!arc || !scoreDisplay) return;
+
+    const score = parseFloat(arc.dataset.score) || 0;
+    const color = arc.dataset.color;
+    const colorMap = { green: '#10b981', yellow: '#f59e0b', orange: '#f97316', red: '#ef4444' };
+    const circumference = 402.1;
+    const targetOffset  = circumference * (1 - score / 100);
+
+    arc.style.stroke = colorMap[color] || '#6366f1';
+
+    // Animate arc
+    setTimeout(() => {
+      arc.style.strokeDashoffset = targetOffset;
+    }, 200);
+
+    // Animate counter
+    let current = 0;
+    const step = score / 60;
+    const counter = setInterval(() => {
+      current = Math.min(current + step, score);
+      scoreDisplay.textContent = Math.round(current) + '%';
+      if (current >= score) clearInterval(counter);
+    }, 16);
+
+    // Animate progress bars
+    document.querySelectorAll('.score-bar').forEach(bar => {
+      const target = parseFloat(bar.dataset.target) || 0;
+      setTimeout(() => { bar.style.width = target + '%'; }, 400);
+    });
+  });
+</script>
+{% endblock %}

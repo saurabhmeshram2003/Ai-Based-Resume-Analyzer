@@ -1,0 +1,13 @@
+flask
+flask-login
+flask-limiter
+bcrypt
+pymongo
+pdfplumber
+docx2txt
+spacy>=3.5,<4
+reportlab
+python-dotenv
+openai
+Jinja2
+Werkzeug

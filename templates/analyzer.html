@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Analyze Resume — ResumeAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-5xl mx-auto">
+
+    <!-- Page header -->
+    <div class="text-center mb-10">
+      <h1 class="font-heading text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+        Analyze Your Resume
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 text-base max-w-xl mx-auto">
+        Upload your resume and paste a job description to get your ATS score and personalized improvement tips.
+      </p>
+      {% if not current_user.is_authenticated %}
+      <div class="mt-4 inline-flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-2 rounded-full">
+        <i class="fa-solid fa-circle-info"></i>
+        Free tier: 3 analyses/day. <a href="/signup" class="font-semibold underline ml-1">Sign up for unlimited →</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <form id="analyzer-form" action="/analyze" method="POST" enctype="multipart/form-data">
+      <div class="grid lg:grid-cols-2 gap-6">
+
+        <!-- ===== LEFT: Resume Upload ===== -->
+        <div class="glass-card p-6 sm:p-8 rounded-2xl">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+              <i class="fa-solid fa-file-lines text-indigo-600 dark:text-indigo-400 text-sm"></i>
+            </div>
+            <h2 class="font-heading font-semibold text-gray-900 dark:text-white text-lg">Your Resume</h2>
+          </div>
+
+          <!-- Drop zone -->
+          <div id="drop-zone"
+            class="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 hover:border-indigo-400 hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 group">
+
+            <!-- Hidden file input -->
+            <input id="file-upload" name="resume" type="file" accept=".pdf,.docx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+
+            <!-- Default state -->
+            <div id="upload-prompt">
+              <div class="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-500"></i>
+              </div>
+              <p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Drag & drop or click to upload</p>
+              <p class="text-xs text-gray-400">PDF or DOCX · Max 2 MB</p>
+            </div>
+
+            <!-- File selected state -->
+            <div id="file-selected" class="hidden">
+              <div class="w-14 h-14 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-file-circle-check text-2xl text-emerald-500"></i>
+              </div>
+              <p id="file-name" class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1 truncate max-w-[200px] mx-auto"></p>
+              <p id="file-size" class="text-xs text-gray-400 mb-3"></p>
+              <button type="button" id="remove-file"
+                class="text-xs text-red-500 hover:text-red-700 font-medium bg-red-50 dark:bg-red-900/20 hover:bg-red-100 px-3 py-1 rounded-lg transition-colors relative z-20">
+                <i class="fa-solid fa-xmark mr-1"></i>Remove
+              </button>
+            </div>
+          </div>
+
+          <!-- Tips -->
+          <div class="mt-4 space-y-2">
+            <p class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-500"></i>
+              Use a text-based PDF (not scanned/image)
+            </p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-500"></i>
+              Single-column layouts parse best
+            </p>
+          </div>
+        </div>
+
+        <!-- ===== RIGHT: Job Description ===== -->
+        <div class="glass-card p-6 sm:p-8 rounded-2xl flex flex-col">
+          <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+                <i class="fa-solid fa-briefcase text-violet-600 dark:text-violet-400 text-sm"></i>
+              </div>
+              <h2 class="font-heading font-semibold text-gray-900 dark:text-white text-lg">Job Description</h2>
+            </div>
+            <button type="button" id="sample-jd-btn"
+              class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Sample JD
+            </button>
+          </div>
+
+          <!-- Role dropdown -->
+          <div class="mb-4">
+            <label for="job-role" class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Target Role</label>
+            <select id="job-role" name="job_role"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+              {% for role in job_roles %}
+              <option value="{{ role }}">{{ role }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- JD textarea -->
+          <div class="flex-grow flex flex-col">
+            <label for="job-description" class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
+              Job Description
+            </label>
+            <div class="relative flex-grow">
+              <textarea id="job-description" name="job_description"
+                class="w-full h-full min-h-[220px] px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none leading-relaxed"
+                placeholder="Paste the full job description here…"></textarea>
+            </div>
+            <div class="flex justify-between items-center mt-2">
+              <div id="skill-highlight-count" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium hidden">
+                <i class="fa-solid fa-circle-check mr-1"></i><span id="detected-count">0</span> skills detected in JD
+              </div>
+              <div class="ml-auto text-xs text-gray-400">
+                <span id="char-count">0</span> chars
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <div class="mt-8 text-center">
+        <button type="submit" id="submit-btn" disabled
+          class="btn-scale inline-flex items-center justify-center gap-3 px-10 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white disabled:text-gray-400 dark:disabled:text-gray-500 text-base font-semibold rounded-2xl shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 disabled:shadow-none transition-all disabled:cursor-not-allowed min-w-[220px]">
+          <span id="btn-content" class="flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Resume
+          </span>
+          <span id="btn-loader" class="hidden items-center gap-2">
+            <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Analyzing…
+          </span>
+        </button>
+        <p class="text-xs text-gray-400 mt-3">Processing usually takes 3–5 seconds</p>
+      </div>
+
+      <!-- Progress steps (shown during analysis) -->
+      <div id="progress-steps" class="hidden mt-8 max-w-sm mx-auto">
+        <div class="space-y-2">
+          {% for step in ['Parsing resume content…', 'Extracting skills & keywords…', 'Computing ATS score…', 'Generating suggestions…'] %}
+          <div class="progress-step flex items-center gap-3 opacity-30 transition-opacity duration-500">
+            <div class="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-check text-white text-xs hidden step-check"></i>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ step }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const SAMPLE_JD = {{ sample_jd | tojson }};
+</script>
+{% endblock %}

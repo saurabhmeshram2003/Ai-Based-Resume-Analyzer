@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — ResumeAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <div>
+      <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
+        <i class="fa-solid fa-shield-halved text-indigo-500 text-xs"></i> Admin
+      </div>
+      <h1 class="font-heading text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+    </div>
+
+    <!-- Metric cards -->
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {% for m in [
+        ('Total Users',       metrics.total_users,    'fa-users',         'indigo', ''),
+        ('Today Analyses',    metrics.daily_analyses, 'fa-chart-line',    'emerald',''),
+        ('Avg ATS Score',     metrics.avg_score,      'fa-bullseye',      'amber',  '%'),
+        ('Pro / Recruiter',   metrics.pro_users,      'fa-crown',         'violet', ''),
+      ] %}
+      <div class="glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-{{ m[3] }}-50 dark:bg-{{ m[3] }}-900/20 flex items-center justify-center">
+            <i class="fa-solid {{ m[2] }} text-{{ m[3] }}-600 dark:text-{{ m[3] }}-400 text-sm"></i>
+          </div>
+        </div>
+        <p class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ m[1] }}{{ m[4] }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ m[0] }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Charts -->
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div class="glass-card rounded-2xl p-6">
+        <h2 class="font-heading font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-chart-bar text-indigo-500 text-sm"></i> Top Job Roles
+        </h2>
+        <div class="h-52">
+          <canvas id="roles-chart"></canvas>
+        </div>
+      </div>
+      <div class="glass-card rounded-2xl p-6">
+        <h2 class="font-heading font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-user-group text-violet-500 text-sm"></i> User Subscription Breakdown
+        </h2>
+        <div class="h-52 flex items-center justify-center">
+          <canvas id="subs-chart" style="max-width:200px"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users table -->
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+        <h2 class="font-heading font-semibold text-gray-900 dark:text-white">All Users ({{ users | length }})</h2>
+        <input id="user-search" type="text" placeholder="Search…"
+          class="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 dark:bg-gray-800/60">
+            <tr>
+              {% for h in ['Name', 'Email', 'Plan', 'Role', 'Joined', 'Actions'] %}
+              <th class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-6 py-3">{{ h }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-800" id="users-tbody">
+            {% for u in users %}
+            <tr class="user-row hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+              data-name="{{ u.get('name','') | lower }}" data-email="{{ u.get('email','') | lower }}">
+              <td class="px-6 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    {{ u.get('name','?')[0].upper() }}
+                  </div>
+                  <span class="font-medium text-gray-800 dark:text-gray-200">{{ u.get('name','—') }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ u.get('email','—') }}</td>
+              <td class="px-6 py-3">
+                <span class="text-xs font-semibold px-2 py-1 rounded-full
+                  {% if u.get('subscription') == 'pro' %}bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400
+                  {% elif u.get('subscription') == 'recruiter' %}bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400
+                  {% else %}bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+                  {{ u.get('subscription', 'free') | title }}
+                </span>
+              </td>
+              <td class="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs capitalize">{{ u.get('role', 'user') }}</td>
+              <td class="px-6 py-3 text-gray-400 text-xs">
+                {% if u.get('created_at') %}
+                {{ u.created_at.strftime('%b %d, %Y') if u.created_at is not string else u.created_at[:10] }}
+                {% else %}—{% endif %}
+              </td>
+              <td class="px-6 py-3">
+                <form action="/admin/update-user" method="POST" class="flex items-center gap-2">
+                  <input type="hidden" name="user_id" value="{{ u._id }}">
+                  <select name="plan"
+                    class="text-xs px-2 py-1 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-400 outline-none">
+                    {% for p in ['free', 'pro', 'recruiter'] %}
+                    <option {% if u.get('subscription') == p %}selected{% endif %}>{{ p }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="text-xs px-2 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Update</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400 text-sm">No users yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Analyses table -->
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+        <h2 class="font-heading font-semibold text-gray-900 dark:text-white">Recent Analyses ({{ analyses | length }})</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 dark:bg-gray-800/60">
+            <tr>
+              {% for h in ['File', 'Role', 'Score', 'Date', 'Action'] %}
+              <th class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider px-6 py-3">{{ h }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+            {% for a in analyses %}
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <td class="px-6 py-3 font-medium text-gray-800 dark:text-gray-200 text-xs truncate max-w-[180px]">{{ a.get('filename','—') }}</td>
+              <td class="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ a.get('job_role','—') }}</td>
+              <td class="px-6 py-3">
+                <span class="font-bold text-sm
+                  {% if a.score >= 75 %}text-emerald-600 dark:text-emerald-400
+                  {% elif a.score >= 50 %}text-amber-600 dark:text-amber-400
+                  {% else %}text-red-600 dark:text-red-400{% endif %}">
+                  {{ a.score|int }}%
+                </span>
+              </td>
+              <td class="px-6 py-3 text-gray-400 text-xs">
+                {% if a.get('created_at') %}
+                {{ a.created_at.strftime('%b %d, %Y') if a.created_at is not string else a.created_at[:10] }}
+                {% else %}—{% endif %}
+              </td>
+              <td class="px-6 py-3">
+                <a href="/result/{{ a._id }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 text-sm">No analyses yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Top roles bar chart
+  const rolesCtx = document.getElementById('roles-chart').getContext('2d');
+  new Chart(rolesCtx, {
+    type: 'bar',
+    data: {
+      labels: [{% for r in metrics.top_roles %}"{{ r._id or 'Unknown' }}"{% if not loop.last %},{% endif %}{% endfor %}],
+      datasets: [{ label: 'Analyses', data: [{% for r in metrics.top_roles %}{{ r.count }}{% if not loop.last %},{% endif %}{% endfor %}],
+        backgroundColor: ['rgba(99,102,241,0.8)','rgba(139,92,246,0.8)','rgba(16,185,129,0.8)','rgba(245,158,11,0.8)','rgba(239,68,68,0.8)','rgba(14,165,233,0.8)'],
+        borderRadius: 6, borderSkipped: false }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size:10 }, color:'#94a3b8' } },
+                x: { grid: { display: false }, ticks: { font: { size:9 }, color:'#94a3b8', maxRotation:30 } } } }
+  });
+
+  // Subscription doughnut
+  const subsCtx = document.getElementById('subs-chart').getContext('2d');
+  new Chart(subsCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Free', 'Pro', 'Recruiter'],
+      datasets: [{ data: [
+        {{ metrics.total_users - metrics.pro_users }},
+        {{ metrics.pro_users }},
+        0
+      ], backgroundColor: ['#e0e7ff','#6366f1','#7c3aed'], borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { position: 'bottom', labels: { font: { size:10 }, color:'#94a3b8', padding:12 } } } }
+  });
+
+  // User search
+  const userSearch = document.getElementById('user-search');
+  userSearch?.addEventListener('input', () => {
+    const q = userSearch.value.toLowerCase();
+    document.querySelectorAll('.user-row').forEach(row => {
+      const match = row.dataset.name?.includes(q) || row.dataset.email?.includes(q);
+      row.classList.toggle('hidden', !match);
+    });
+  });
+</script>
+{% endblock %}
