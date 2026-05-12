@@ -151,6 +151,62 @@
 </section>
 
 <!-- ============================================================ PRICING -->
+<section id="pricing" class="py-24 bg-slate-50 dark:bg-gray-950">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="section-eyebrow">Pricing</p>
+      <h2 class="section-title">Start Free, Upgrade Anytime</h2>
+      <p class="section-sub">No credit card required to get started.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <!-- Free -->
+      <div class="pricing-card">
+        <div class="pricing-plan-name">Free</div>
+        <div class="pricing-price">$0<span class="pricing-period">/month</span></div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Perfect to get started</p>
+        <ul class="space-y-3 mb-8">
+          {% for f in ['3 analyses per day','Skill match report','Section analysis','Basic suggestions','Score breakdown'] %}
+          <li class="pricing-feature"><i class="fa-solid fa-check text-emerald-500 text-xs mr-2"></i>{{ f }}</li>
+          {% endfor %}
+          {% for f in ['PDF reports','AI rewrite assistant','Unlimited history'] %}
+          <li class="pricing-feature text-gray-400"><i class="fa-solid fa-xmark text-gray-300 dark:text-gray-600 text-xs mr-2"></i>{{ f }}</li>
+          {% endfor %}
+        </ul>
+        <a href="/signup" id="pricing-free-cta" class="btn-outline-full">Get Started Free</a>
+      </div>
+
+      <!-- Pro (highlighted) -->
+      <div class="pricing-card pricing-card-featured relative">
+        <div class="absolute -top-3 inset-x-0 flex justify-center">
+          <span class="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow">MOST POPULAR</span>
+        </div>
+        <div class="pricing-plan-name text-indigo-600 dark:text-indigo-400">Pro</div>
+        <div class="pricing-price">$9<span class="pricing-period">/month</span></div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">For active job seekers</p>
+        <ul class="space-y-3 mb-8">
+          {% for f in ['Unlimited analyses','Everything in Free','PDF report downloads','AI bullet point rewriter','Full history dashboard','Priority support'] %}
+          <li class="pricing-feature"><i class="fa-solid fa-check text-emerald-500 text-xs mr-2"></i>{{ f }}</li>
+          {% endfor %}
+        </ul>
+        <a href="/signup" id="pricing-pro-cta" class="btn-primary-full">Start Pro Trial</a>
+      </div>
+
+      <!-- Recruiter -->
+      <div class="pricing-card">
+        <div class="pricing-plan-name">Recruiter</div>
+        <div class="pricing-price">$29<span class="pricing-period">/month</span></div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">For hiring teams</p>
+        <ul class="space-y-3 mb-8">
+          {% for f in ['Everything in Pro','Bulk resume upload','CSV score export','Candidate comparison','Team dashboard','SLA support'] %}
+          <li class="pricing-feature"><i class="fa-solid fa-check text-emerald-500 text-xs mr-2"></i>{{ f }}</li>
+          {% endfor %}
+        </ul>
+        <a href="/signup" id="pricing-recruiter-cta" class="btn-outline-full">Contact Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ============================================================ FOOTER CTA -->
 <section class="py-20 bg-gradient-to-br from-indigo-600 to-violet-700">
